@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+asyncpg
+sqlalchemy
+
+
+
+git config --global user.name "nastya-exe"
+git config --global user.email "lena.krytko@mail.ru"
