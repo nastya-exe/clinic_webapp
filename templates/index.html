@@ -1,13 +1,32 @@
+<!-- static/index.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8" />
-    <title>Расписание</title>
+    <meta charset="UTF-8">
+    <title>Запись в клинику</title>
+    <script src="/static/script.js" defer></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .date-button, .time-button {
+            margin: 5px;
+            padding: 10px 15px;
+            border: 1px solid #ccc;
+            background-color: #f2f2f2;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Выберите дату и время записи</h1>
-    <div id="schedule"></div>
+    <h1>Выберите дату для записи</h1>
+    <div id="dates" class="container"></div>
 
-    <script src="/static/script.js"></script>
+    <h2>Доступное время:</h2>
+    <div id="times" class="container"></div>
 </body>
 </html>
