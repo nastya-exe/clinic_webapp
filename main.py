@@ -1,16 +1,16 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Dict
-from db import database
+
 import uvicorn
 from dotenv import load_dotenv
-import os
-load_dotenv()
+from sqlalchemy.ext.asyncio import AsyncSession
+from db import models
+from db import db_session
 
-from config import DATABASE_URL
+load_dotenv()
 
 app = FastAPI()
 
@@ -65,15 +65,16 @@ async def book_slot(data: BookingRequest):
     BOOKINGS[data.date][data.time] = data.user_name
     return {"success": True, "message": f"Вы записаны на {data.date} в {data.time}"}
 
-@app.on_event("startup")
-async def startup():
-    await database.connect()
 
-@app.on_event("shutdown")
-async def shutdown():
-    await database.disconnect()
+async def get_session() -> AsyncSession:
+    async with async_session() as session:
+        yield session
 
-
+@app.get("/doctors")
+async def get_doctors(session: AsyncSession = Depends(get_session)):
+    result = await session.execute(select(Doctors))
+    doctors = result.scalars().all()
+    return doctors
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

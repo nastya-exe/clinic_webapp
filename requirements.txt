@@ -1,6 +1,8 @@
 fastapi
 uvicorn[standard]
 asyncpg
+sqlalchemy[asyncio]
 aiogram
 jinja2
+python-dotenv
 
