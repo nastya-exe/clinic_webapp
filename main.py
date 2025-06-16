@@ -11,11 +11,11 @@ from sqlalchemy.future import select
 from sqlalchemy import func
 from datetime import datetime, timedelta, time
 from db.db_session import async_session
-from db.models import DoctorSchedule
+from db.models import DoctorSchedule, Doctors
 from fastapi import Depends
 
 from db import models
-from db import db_session
+
 
 load_dotenv()
 
@@ -43,6 +43,10 @@ class BookingRequest(BaseModel):
 async def index():
     with open("templates/index.html", "r", encoding="utf-8") as f:
         return f.read()
+
+async def get_session() -> AsyncSession:
+    async with async_session() as session:
+        yield session
 
 @app.get("/api/schedule")
 async def get_schedule(session: AsyncSession = Depends(get_session)):
@@ -82,9 +86,6 @@ async def book_slot(data: BookingRequest):
     return {"success": True, "message": f"Вы записаны на {data.date} в {data.time}"}
 
 
-async def get_session() -> AsyncSession:
-    async with async_session() as session:
-        yield session
 
 @app.get("/doctors")
 async def get_doctors(session: AsyncSession = Depends(get_session)):
