@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
@@ -20,7 +20,8 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
 async def root():
-    return {"message": "Привет, Настя! FastAPI работает."}
+    content = {"message": "Привет, Настя! FastAPI работает."}
+    return JSONResponse(content=content, media_type="application/json; charset=utf-8")
 
 # Пример простого расписания на неделю (по дням)
 @app.get("/api/schedule")
