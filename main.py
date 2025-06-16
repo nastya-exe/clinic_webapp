@@ -7,6 +7,13 @@ from pydantic import BaseModel
 import uvicorn
 from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy import func
+from datetime import datetime, timedelta, time
+from db.db_session import async_session
+from db.models import DoctorSchedule
+from fastapi import Depends
+
 from db import models
 from db import db_session
 
@@ -24,13 +31,6 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Пример расписания — в реале брать из БД!
-SCHEDULE = {
-    "2025-06-16": ["11:00", "12:00", "14:00"],
-    "2025-06-17": ["10:00", "11:00", "15:00"],
-    "2025-06-18": ["10:00", "11:00", "13:00"],
-}
-
 # Храним записи (для примера, в памяти)
 BOOKINGS = {}
 
@@ -45,13 +45,29 @@ async def index():
         return f.read()
 
 @app.get("/api/schedule")
-async def get_schedule():
-    # Возвращаем даты с доступным временем (без занятых слотов)
+async def get_schedule(session: AsyncSession = Depends(get_session)):
+    today = datetime.today().date()
+    days = [today + timedelta(days=i) for i in range(7)]
+
     result = {}
-    for date, times in SCHEDULE.items():
-        free_times = [t for t in times if BOOKINGS.get(date, {}).get(t) is None]
-        result[date] = free_times
+
+    stmt = select(DoctorSchedule)
+    schedules = (await session.execute(stmt)).scalars().all()
+
+    for day in days:
+        dow = day.strftime('%A').lower()  # 'monday', 'tuesday'...
+        for sched in schedules:
+            if sched.day_of_week.lower() == dow:
+                current = datetime.combine(day, sched.start_time)
+                end = datetime.combine(day, sched.end_time)
+                slots = []
+                while current < end:
+                    slots.append(current.strftime('%H:%M'))
+                    current += timedelta(minutes=60)  # шаг 1 час
+                result.setdefault(str(day), []).extend(slots)
+
     return result
+
 
 @app.post("/api/book")
 async def book_slot(data: BookingRequest):
