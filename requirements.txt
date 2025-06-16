@@ -2,5 +2,5 @@ fastapi
 uvicorn[standard]
 asyncpg
 aiogram
-
+jinja2
 
