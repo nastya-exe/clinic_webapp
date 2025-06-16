@@ -1,32 +1,131 @@
-<!-- static/index.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Запись в клинику</title>
-    <script src="/static/script.js" defer></script>
-    <style>
-        body { font-family: sans-serif; padding: 20px; }
-        .date-button, .time-button {
-            margin: 5px;
-            padding: 10px 15px;
-            border: 1px solid #ccc;
-            background-color: #f2f2f2;
-            cursor: pointer;
-            border-radius: 8px;
-        }
-        .container {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-    </style>
+<meta charset="UTF-8" />
+<title>Запись в клинику</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 500px; margin: 20px auto; }
+  #calendar { display: flex; flex-wrap: wrap; max-width: 350px; }
+  .day { width: 40px; height: 40px; border: 1px solid #ddd; margin: 2px;
+         display: flex; justify-content: center; align-items: center; cursor: pointer; }
+  .day.disabled { color: #ccc; cursor: not-allowed; }
+  .day.selected { background-color: #007bff; color: white; }
+  #times { margin-top: 20px; }
+  .time-slot { padding: 5px 10px; margin: 5px; border: 1px solid #007bff; border-radius: 4px; cursor: pointer; display: inline-block; }
+  .time-slot.disabled { border-color: #ccc; color: #ccc; cursor: not-allowed; }
+  #message { margin-top: 20px; font-weight: bold; }
+</style>
 </head>
 <body>
-    <h1>Выберите дату для записи</h1>
-    <div id="dates" class="container"></div>
 
-    <h2>Доступное время:</h2>
-    <div id="times" class="container"></div>
+<h2>Выберите дату для записи:</h2>
+<div id="calendar"></div>
+
+<h3>Доступное время:</h3>
+<div id="times"></div>
+
+<div id="message"></div>
+
+<script>
+const calendarEl = document.getElementById('calendar');
+const timesEl = document.getElementById('times');
+const messageEl = document.getElementById('message');
+
+let schedule = {};
+let selectedDate = null;
+
+// Показываем календарь на июнь 2025 для примера
+const year = 2025;
+const month = 5; // июнь, в JS месяцы 0-based (0 - январь)
+
+// Получаем количество дней в месяце
+function daysInMonth(y, m) {
+    return new Date(y, m + 1, 0).getDate();
+}
+
+// Загружаем расписание с сервера
+async function loadSchedule() {
+    const res = await fetch('/api/schedule');
+    schedule = await res.json();
+    renderCalendar();
+}
+
+// Рисуем календарь с активными/неактивными днями
+function renderCalendar() {
+    calendarEl.innerHTML = '';
+    const daysCount = daysInMonth(year, month);
+    for (let d = 1; d <= daysCount; d++) {
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const dayEl = document.createElement('div');
+        dayEl.className = 'day';
+
+        if (schedule[dateStr] && schedule[dateStr].length > 0) {
+            dayEl.textContent = d;
+            dayEl.onclick = () => {
+                selectedDate = dateStr;
+                highlightSelectedDay();
+                renderTimes();
+                messageEl.textContent = '';
+            };
+        } else {
+            dayEl.textContent = d;
+            dayEl.classList.add('disabled');
+        }
+
+        calendarEl.appendChild(dayEl);
+    }
+}
+
+// Выделяем выбранный день
+function highlightSelectedDay() {
+    [...calendarEl.children].forEach(child => {
+        if (child.textContent === String(parseInt(selectedDate.slice(-2)))) {
+            child.classList.add('selected');
+        } else {
+            child.classList.remove('selected');
+        }
+    });
+}
+
+// Показываем слоты для выбранной даты
+function renderTimes() {
+    timesEl.innerHTML = '';
+    if (!selectedDate) return;
+
+    const times = schedule[selectedDate] || [];
+    times.forEach(t => {
+        const slotEl = document.createElement('div');
+        slotEl.className = 'time-slot';
+        slotEl.textContent = t;
+        slotEl.onclick = () => bookSlot(t);
+        timesEl.appendChild(slotEl);
+    });
+
+    if(times.length === 0){
+        timesEl.textContent = 'Свободных слотов нет';
+    }
+}
+
+// Отправляем запись на сервер
+async function bookSlot(time) {
+    const userName = prompt('Введите ваше имя для записи');
+    if (!userName) return;
+
+    const res = await fetch('/api/book', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({date: selectedDate, time: time, user_name: userName})
+    });
+    const data = await res.json();
+    messageEl.textContent = data.message;
+    if(data.success){
+        await loadSchedule();
+        renderTimes();
+    }
+}
+
+loadSchedule();
+</script>
+
 </body>
 </html>
