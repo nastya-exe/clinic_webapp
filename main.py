@@ -12,7 +12,7 @@ from sqlalchemy import func
 from datetime import datetime, timedelta, time
 from db.db_session import async_session
 from db.models import DoctorSchedule, Doctors
-from fastapi import Depends
+from fastapi import FastAPI, Depends, Query
 from dotenv import load_dotenv
 import os
 from db import models
