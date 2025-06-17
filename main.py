@@ -48,6 +48,16 @@ async def get_session() -> AsyncSession:
     async with async_session() as session:
         yield session
 
+EN_TO_RU = {
+    'monday': 'Пн',
+    'tuesday': 'Вт',
+    'wednesday': 'Ср',
+    'thursday': 'Чт',
+    'friday': 'Пт',
+    'saturday': 'Сб',
+    'sunday': 'Вск'
+}
+
 @app.get("/api/schedule")
 async def get_schedule(session: AsyncSession = Depends(get_session)):
     today = datetime.today().date()
@@ -58,10 +68,14 @@ async def get_schedule(session: AsyncSession = Depends(get_session)):
     stmt = select(DoctorSchedule)
     schedules = (await session.execute(stmt)).scalars().all()
 
+
+
     for day in days:
-        dow = day.strftime('%A').lower()  # 'monday', 'tuesday'...
+        dow_en = day.strftime('%A').lower()
+        dow_ru = EN_TO_RU[dow_en]
+
         for sched in schedules:
-            if sched.day_of_week.lower() == dow:
+            if sched.day_of_week == dow_ru:
                 current = datetime.combine(day, sched.start_time)
                 end = datetime.combine(day, sched.end_time)
                 slots = []
