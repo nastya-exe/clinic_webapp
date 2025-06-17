@@ -44,21 +44,13 @@ class BookingRequest(BaseModel):
 @app.get("/", response_class=HTMLResponse)
 async def index():
     with open("templates/index.html", "r", encoding="utf-8") as f:
-        return f.read()
+        content = f.read()
+        return HTMLResponse(content=content, media_type="text/html; charset=utf-8")
 
 async def get_session() -> AsyncSession:
     async with async_session() as session:
         yield session
 
-EN_TO_RU = {
-    'monday': 'Пн',
-    'tuesday': 'Вт',
-    'wednesday': 'Ср',
-    'thursday': 'Чт',
-    'friday': 'Пт',
-    'saturday': 'Сб',
-    'sunday': 'Вск'
-}
 
 @app.get("/api/schedule")
 async def get_schedule(session: AsyncSession = Depends(get_session)):
@@ -74,10 +66,9 @@ async def get_schedule(session: AsyncSession = Depends(get_session)):
 
     for day in days:
         dow_en = day.strftime('%A').lower()
-        dow_ru = EN_TO_RU[dow_en]
 
         for sched in schedules:
-            if sched.day_of_week == dow_ru:
+            if sched.day_of_week.lower() == dow_en:
                 current = datetime.combine(day, sched.start_time)
                 end = datetime.combine(day, sched.end_time)
                 slots = []
