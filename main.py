@@ -15,6 +15,7 @@ from db.models import DoctorSchedule, Doctors
 from fastapi import FastAPI, Depends, Query
 from dotenv import load_dotenv
 import os
+
 from db import models
 
 
@@ -53,7 +54,8 @@ async def get_session() -> AsyncSession:
 
 
 @app.get("/api/schedule")
-async def get_schedule(doctor_id: int = Query(...),
+async def get_schedule(
+    doctor_id: int = Query(...),
     session: AsyncSession = Depends(get_session)
 ):
     today = datetime.today().date()
@@ -61,22 +63,28 @@ async def get_schedule(doctor_id: int = Query(...),
 
     result = {}
 
-    # фильтруем только нужного врача
+    # Загружаем расписание врача
     stmt = select(DoctorSchedule).where(DoctorSchedule.doctor_id == doctor_id)
     schedules = (await session.execute(stmt)).scalars().all()
+    schedule_map = {s.day_of_week.lower(): s for s in schedules}
 
     for day in days:
         dow_en = day.strftime('%A').lower()
+        if dow_en not in schedule_map:
+            continue  # врач не работает в этот день
 
-        for sched in schedules:
-            if sched.day_of_week.lower() == dow_en:
-                current = datetime.combine(day, sched.start_time)
-                end = datetime.combine(day, sched.end_time)
-                slots = []
-                while current < end:
-                    slots.append(current.strftime('%H:%M'))
-                    current += timedelta(minutes=60)
-                result.setdefault(str(day), []).extend(slots)
+        sched = schedule_map[dow_en]
+        start_time = sched.start_time
+        end_time = sched.end_time
+
+        # генерируем слоты по часу
+        current_time = datetime.combine(day, start_time)
+        slots = []
+        while current_time.time() < end_time:
+            slots.append(current_time.strftime('%H:%M'))
+            current_time += timedelta(hours=1)
+
+        result[str(day)] = slots
 
     return result
 

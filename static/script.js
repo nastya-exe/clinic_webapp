@@ -3,19 +3,7 @@ window.onload = async function loadSchedule() {
 
     try {
         const response = await fetch(`/api/schedule?doctor_id=${doctorId}`);
-        if (!response.ok) throw new Error("Ошибка при загрузке расписания");
-
-        const schedule = await response.json();
-        // здесь остальной код для отрисовки слотов
-        console.log(schedule); // для проверки
-    } catch (error) {
-        console.error("Ошибка при получении расписания:", error);
-    }
-}
-
-        if (!response.ok) {
-            throw new Error(`Ошибка при загрузке расписания: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`Ошибка при загрузке расписания: ${response.status}`);
 
         const schedule = await response.json();
 
@@ -25,6 +13,11 @@ window.onload = async function loadSchedule() {
         // Очистим контейнеры, если вдруг страница не перезагружается
         datesContainer.innerHTML = '';
         timesContainer.innerHTML = '';
+
+        if (Object.keys(schedule).length === 0) {
+            datesContainer.textContent = "Нет доступных дат.";
+            return;
+        }
 
         for (const [date, times] of Object.entries(schedule)) {
             const dateButton = document.createElement('button');
@@ -50,11 +43,6 @@ window.onload = async function loadSchedule() {
 
             datesContainer.appendChild(dateButton);
         }
-
-        if (Object.keys(schedule).length === 0) {
-            datesContainer.textContent = "Нет доступных дат.";
-        }
-
     } catch (error) {
         console.error("Ошибка при получении расписания:", error);
         const datesContainer = document.getElementById('dates');
