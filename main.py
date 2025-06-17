@@ -13,7 +13,8 @@ from datetime import datetime, timedelta, time
 from db.db_session import async_session
 from db.models import DoctorSchedule, Doctors
 from fastapi import Depends
-
+from dotenv import load_dotenv
+import os
 from db import models
 
 
@@ -21,6 +22,7 @@ load_dotenv()
 
 app = FastAPI()
 
+DATABASE_URL = os.getenv("DATABASE_URL")
 # CORS для фронтенда, если нужен
 app.add_middleware(
     CORSMiddleware,
