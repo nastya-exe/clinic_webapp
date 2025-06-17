@@ -8,7 +8,8 @@ window.onload = async function loadSchedule() {
     }
 
     try {
-        const response = await fetch(`/api/schedule?doctor_id=${doctorId}`);
+        const response = await fetch('/api/schedule?doctor_id=7');
+// fetch(`/api/schedule?doctor_id=${doctorId}`);
 
         if (!response.ok) {
             throw new Error(`Ошибка при загрузке расписания: ${response.status}`);
