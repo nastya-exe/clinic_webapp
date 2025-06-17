@@ -1,5 +1,7 @@
+../config.env
+.env
 __pycache__/
-*.py[cod]
+*.pyc
 venv/
-nohup.out
+config.py
 .env
