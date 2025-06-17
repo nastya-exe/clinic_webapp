@@ -53,8 +53,7 @@ async def get_session() -> AsyncSession:
 
 
 @app.get("/api/schedule")
-async def get_schedule(
-    doctor_id: int = Query(...),
+async def get_schedule(doctor_id: int = Query(...),
     session: AsyncSession = Depends(get_session)
 ):
     today = datetime.today().date()

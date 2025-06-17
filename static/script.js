@@ -1,15 +1,17 @@
 window.onload = async function loadSchedule() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const doctorId = urlParams.get("doctor_id");
-
-    if (!doctorId) {
-        console.error("Не передан doctor_id в URL");
-        return;
-    }
+    const doctorId = 7;  // ВРЕМЕННАЯ ЗАТЫЧКА!
 
     try {
-        const response = await fetch('/api/schedule?doctor_id=7');
-// fetch(`/api/schedule?doctor_id=${doctorId}`);
+        const response = await fetch(`/api/schedule?doctor_id=${doctorId}`);
+        if (!response.ok) throw new Error("Ошибка при загрузке расписания");
+
+        const schedule = await response.json();
+        // здесь остальной код для отрисовки слотов
+        console.log(schedule); // для проверки
+    } catch (error) {
+        console.error("Ошибка при получении расписания:", error);
+    }
+}
 
         if (!response.ok) {
             throw new Error(`Ошибка при загрузке расписания: ${response.status}`);
