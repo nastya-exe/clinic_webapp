@@ -19,6 +19,23 @@
 <body>
 
 <h2>Выберите дату для записи:</h2>
+
+<div style="display: flex; justify-content: space-between; align-items: center; max-width: 350px;">
+  <button id="prevMonth">← Предыдущий</button>
+  <h3 id="monthLabel">Июнь 2025</h3>
+  <button id="nextMonth">→ Следующий</button>
+</div>
+
+<div id="weekdays" style="display: flex; max-width: 350px; font-weight: bold;">
+  <div class="day" style="width: 40px;">Пн</div>
+  <div class="day" style="width: 40px;">Вт</div>
+  <div class="day" style="width: 40px;">Ср</div>
+  <div class="day" style="width: 40px;">Чт</div>
+  <div class="day" style="width: 40px;">Пт</div>
+  <div class="day" style="width: 40px;">Сб</div>
+  <div class="day" style="width: 40px;">Вс</div>
+</div>
+
 <div id="calendar"></div>
 
 <h3>Доступное время:</h3>
@@ -27,6 +44,15 @@
 <div id="message"></div>
 
 <script>
+
+    let year = 2025;
+let month = 5; // Июнь
+
+const monthNames = [
+  "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+  "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
+];
+
 const calendarEl = document.getElementById('calendar');
 const timesEl = document.getElementById('times');
 const messageEl = document.getElementById('message');
@@ -34,9 +60,6 @@ const messageEl = document.getElementById('message');
 let schedule = {};
 let selectedDate = null;
 
-// Показываем календарь на июнь 2025 для примера
-const year = 2025;
-const month = 5; // июнь, в JS месяцы 0-based (0 - январь)
 
 // Получаем количество дней в месяце
 function daysInMonth(y, m) {
@@ -54,13 +77,29 @@ async function loadSchedule() {
 function renderCalendar() {
     calendarEl.innerHTML = '';
     const daysCount = daysInMonth(year, month);
+    const firstDay = new Date(year, month, 1);
+    const startWeekDay = (firstDay.getDay() + 6) % 7; // Пн = 0
+    document.getElementById('monthLabel').textContent = `${monthNames[month]} ${year}`;
+
+
+
+    // Пустые ячейки до 1-го числа
+    for (let i = 0; i < startWeekDay; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'day';
+        emptyCell.style.visibility = 'hidden';
+        calendarEl.appendChild(emptyCell);
+    }
+
     for (let d = 1; d <= daysCount; d++) {
-        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         const dayEl = document.createElement('div');
         dayEl.className = 'day';
+        dayEl.textContent = d;
+
+        dayEl.dataset.date = dateStr;
 
         if (schedule[dateStr] && schedule[dateStr].length > 0) {
-            dayEl.textContent = d;
             dayEl.onclick = () => {
                 selectedDate = dateStr;
                 highlightSelectedDay();
@@ -68,7 +107,6 @@ function renderCalendar() {
                 messageEl.textContent = '';
             };
         } else {
-            dayEl.textContent = d;
             dayEl.classList.add('disabled');
         }
 
@@ -76,16 +114,18 @@ function renderCalendar() {
     }
 }
 
+
 // Выделяем выбранный день
 function highlightSelectedDay() {
     [...calendarEl.children].forEach(child => {
-        if (child.textContent === String(parseInt(selectedDate.slice(-2)))) {
+        if (child.dataset.date === selectedDate) {
             child.classList.add('selected');
         } else {
             child.classList.remove('selected');
         }
     });
 }
+
 
 // Показываем слоты для выбранной даты
 function renderTimes() {
@@ -125,6 +165,25 @@ async function bookSlot(time) {
 }
 
 loadSchedule();
+
+document.getElementById('prevMonth').onclick = () => {
+    month--;
+    if (month < 0) {
+        month = 11;
+        year--;
+    }
+    loadSchedule();
+};
+
+document.getElementById('nextMonth').onclick = () => {
+    month++;
+    if (month > 11) {
+        month = 0;
+        year++;
+    }
+    loadSchedule();
+};
+
 </script>
 
 </body>
