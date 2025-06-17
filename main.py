@@ -116,6 +116,15 @@ async def book_slot(data: BookingRequest):
     return {"success": True, "message": f"Вы записаны на {data.date} в {data.time}"}
 
 
+@app.get("/api/doctor_name")
+async def get_doctor_name(doctor_id: int, session: AsyncSession = Depends(get_session)):
+    stmt = select(Doctor).where(Doctor.id == doctor_id)
+    doctor = (await session.execute(stmt)).scalar_one_or_none()
+    if not doctor:
+        raise HTTPException(status_code=404, detail="Врач не найден")
+    return {"name": doctor.name}
+
+
 
 @app.get("/doctors")
 async def get_doctors(session: AsyncSession = Depends(get_session)):

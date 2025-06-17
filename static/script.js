@@ -1,13 +1,17 @@
-window.onload = async function loadSchedule() {
-    // Получаем doctor_id из параметров URL
+window.onload = async function() {
     const urlParams = new URLSearchParams(window.location.search);
-    const doctorId = urlParams.get('doctor_id');
+    const doctorId = urlParams.get("doctor_id");
+    let doctorName = urlParams.get("doctor_name");
+    if (doctorName) doctorName = decodeURIComponent(doctorName);
 
     if (!doctorId) {
-        const datesContainer = document.getElementById('dates');
-        datesContainer.textContent = "Врач не выбран. Пожалуйста, выберите врача в боте и перейдите по ссылке.";
+        alert("Не передан doctor_id в URL");
         return;
     }
+
+    // Показать имя врача
+    const doctorNameDiv = document.getElementById('doctor-name');
+    doctorNameDiv.textContent = doctorName ? `Расписание врача: ${doctorName}` : "Расписание врача";
 
     try {
         const response = await fetch(`/api/schedule?doctor_id=${doctorId}`);
@@ -18,7 +22,6 @@ window.onload = async function loadSchedule() {
         const datesContainer = document.getElementById('dates');
         const timesContainer = document.getElementById('times');
 
-        // Очистим контейнеры
         datesContainer.innerHTML = '';
         timesContainer.innerHTML = '';
 
@@ -34,15 +37,14 @@ window.onload = async function loadSchedule() {
 
             dateButton.onclick = () => {
                 timesContainer.innerHTML = '';
-
                 times.forEach(time => {
                     const timeButton = document.createElement('button');
                     timeButton.textContent = time;
                     timeButton.className = 'time-button';
 
                     timeButton.onclick = () => {
-                        alert(`Вы записались на ${date} в ${time}`);
-                        // TODO: добавить POST-запрос на бронирование
+                        alert(`Вы записались к врачу ${doctorName || ''} на ${date} в ${time}`);
+                        // TODO: здесь можно добавить вызов API для записи или переход в бота
                     };
 
                     timesContainer.appendChild(timeButton);
@@ -51,6 +53,7 @@ window.onload = async function loadSchedule() {
 
             datesContainer.appendChild(dateButton);
         }
+
     } catch (error) {
         console.error("Ошибка при получении расписания:", error);
         const datesContainer = document.getElementById('dates');

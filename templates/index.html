@@ -1,3 +1,199 @@
+<!--<!DOCTYPE html>-->
+<!--<html lang="ru">-->
+<!--<head>-->
+<!--<meta charset="UTF-8" />-->
+<!--<title>Запись в клинику</title>-->
+<!--<style>-->
+<!--  body { font-family: Arial, sans-serif; max-width: 500px; margin: 20px auto; }-->
+<!--  #calendar { display: flex; flex-wrap: wrap; max-width: 350px; }-->
+<!--  .day { width: 40px; height: 40px; border: 1px solid #ddd; margin: 2px;-->
+<!--         display: flex; justify-content: center; align-items: center; cursor: pointer; }-->
+<!--  .day.disabled { color: #ccc; cursor: not-allowed; }-->
+<!--  .day.selected { background-color: #007bff; color: white; }-->
+<!--  #times { margin-top: 20px; }-->
+<!--  .time-slot { padding: 5px 10px; margin: 5px; border: 1px solid #007bff; border-radius: 4px; cursor: pointer; display: inline-block; }-->
+<!--  .time-slot.disabled { border-color: #ccc; color: #ccc; cursor: not-allowed; }-->
+<!--  #message { margin-top: 20px; font-weight: bold; }-->
+<!--</style>-->
+<!--</head>-->
+<!--<body>-->
+
+<!--<h2>Выберите дату для записи:</h2>-->
+
+<!--<div id="doctor-name" style="font-weight: bold; margin-bottom: 10px;"></div>-->
+
+<!--<div style="display: flex; justify-content: space-between; align-items: center; max-width: 350px;">-->
+<!--  <button id="prevMonth">← Предыдущий</button>-->
+<!--  <h3 id="monthLabel">Июнь 2025</h3>-->
+<!--  <button id="nextMonth">→ Следующий</button>-->
+<!--</div>-->
+
+<!--&lt;!&ndash; остальная разметка &ndash;&gt;-->
+
+
+<!--<div id="weekdays" style="display: flex; max-width: 350px; font-weight: bold;">-->
+<!--  <div class="day" style="width: 40px;">Пн</div>-->
+<!--  <div class="day" style="width: 40px;">Вт</div>-->
+<!--  <div class="day" style="width: 40px;">Ср</div>-->
+<!--  <div class="day" style="width: 40px;">Чт</div>-->
+<!--  <div class="day" style="width: 40px;">Пт</div>-->
+<!--  <div class="day" style="width: 40px;">Сб</div>-->
+<!--  <div class="day" style="width: 40px;">Вс</div>-->
+<!--</div>-->
+
+<!--<div id="calendar"></div>-->
+
+<!--<h3>Доступное время:</h3>-->
+<!--<div id="times"></div>-->
+
+<!--<div id="message"></div>-->
+
+<!--<script>-->
+
+<!--    let year = 2025;-->
+<!--let month = 5; // Июнь-->
+
+<!--const monthNames = [-->
+<!--  "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",-->
+<!--  "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"-->
+<!--];-->
+
+<!--const calendarEl = document.getElementById('calendar');-->
+<!--const timesEl = document.getElementById('times');-->
+<!--const messageEl = document.getElementById('message');-->
+
+<!--let schedule = {};-->
+<!--let selectedDate = null;-->
+
+
+<!--// Получаем количество дней в месяце-->
+<!--function daysInMonth(y, m) {-->
+<!--    return new Date(y, m + 1, 0).getDate();-->
+<!--}-->
+
+<!--// Загружаем расписание с сервера-->
+<!--async function loadSchedule() {-->
+<!--    const res = await fetch('/api/schedule');-->
+<!--    schedule = await res.json();-->
+<!--    renderCalendar();-->
+<!--}-->
+
+<!--// Рисуем календарь с активными/неактивными днями-->
+<!--function renderCalendar() {-->
+<!--    calendarEl.innerHTML = '';-->
+<!--    const daysCount = daysInMonth(year, month);-->
+<!--    const firstDay = new Date(year, month, 1);-->
+<!--    const startWeekDay = (firstDay.getDay() + 6) % 7; // Пн = 0-->
+<!--    document.getElementById('monthLabel').textContent = `${monthNames[month]} ${year}`;-->
+
+
+
+<!--    // Пустые ячейки до 1-го числа-->
+<!--    for (let i = 0; i < startWeekDay; i++) {-->
+<!--        const emptyCell = document.createElement('div');-->
+<!--        emptyCell.className = 'day';-->
+<!--        emptyCell.style.visibility = 'hidden';-->
+<!--        calendarEl.appendChild(emptyCell);-->
+<!--    }-->
+
+<!--    for (let d = 1; d <= daysCount; d++) {-->
+<!--        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;-->
+<!--        const dayEl = document.createElement('div');-->
+<!--        dayEl.className = 'day';-->
+<!--        dayEl.textContent = d;-->
+
+<!--        dayEl.dataset.date = dateStr;-->
+
+<!--        if (schedule[dateStr] && schedule[dateStr].length > 0) {-->
+<!--            dayEl.onclick = () => {-->
+<!--                selectedDate = dateStr;-->
+<!--                highlightSelectedDay();-->
+<!--                renderTimes();-->
+<!--                messageEl.textContent = '';-->
+<!--            };-->
+<!--        } else {-->
+<!--            dayEl.classList.add('disabled');-->
+<!--        }-->
+
+<!--        calendarEl.appendChild(dayEl);-->
+<!--    }-->
+<!--}-->
+
+
+<!--// Выделяем выбранный день-->
+<!--function highlightSelectedDay() {-->
+<!--    [...calendarEl.children].forEach(child => {-->
+<!--        if (child.dataset.date === selectedDate) {-->
+<!--            child.classList.add('selected');-->
+<!--        } else {-->
+<!--            child.classList.remove('selected');-->
+<!--        }-->
+<!--    });-->
+<!--}-->
+
+
+<!--// Показываем слоты для выбранной даты-->
+<!--function renderTimes() {-->
+<!--    timesEl.innerHTML = '';-->
+<!--    if (!selectedDate) return;-->
+
+<!--    const times = schedule[selectedDate] || [];-->
+<!--    times.forEach(t => {-->
+<!--        const slotEl = document.createElement('div');-->
+<!--        slotEl.className = 'time-slot';-->
+<!--        slotEl.textContent = t;-->
+<!--        slotEl.onclick = () => bookSlot(t);-->
+<!--        timesEl.appendChild(slotEl);-->
+<!--    });-->
+
+<!--    if(times.length === 0){-->
+<!--        timesEl.textContent = 'Свободных слотов нет';-->
+<!--    }-->
+<!--}-->
+
+<!--// Отправляем запись на сервер-->
+<!--async function bookSlot(time) {-->
+<!--    const userName = prompt('Введите ваше имя для записи');-->
+<!--    if (!userName) return;-->
+
+<!--    const res = await fetch('/api/book', {-->
+<!--        method: 'POST',-->
+<!--        headers: {'Content-Type': 'application/json'},-->
+<!--        body: JSON.stringify({date: selectedDate, time: time, user_name: userName})-->
+<!--    });-->
+<!--    const data = await res.json();-->
+<!--    messageEl.textContent = data.message;-->
+<!--    if(data.success){-->
+<!--        await loadSchedule();-->
+<!--        renderTimes();-->
+<!--    }-->
+<!--}-->
+
+<!--loadSchedule();-->
+
+<!--document.getElementById('prevMonth').onclick = () => {-->
+<!--    month&#45;&#45;;-->
+<!--    if (month < 0) {-->
+<!--        month = 11;-->
+<!--        year&#45;&#45;;-->
+<!--    }-->
+<!--    loadSchedule();-->
+<!--};-->
+
+<!--document.getElementById('nextMonth').onclick = () => {-->
+<!--    month++;-->
+<!--    if (month > 11) {-->
+<!--        month = 0;-->
+<!--        year++;-->
+<!--    }-->
+<!--    loadSchedule();-->
+<!--};-->
+
+<!--</script>-->
+
+<!--</body>-->
+<!--</html>-->
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -5,35 +201,85 @@
 <title>Запись в клинику</title>
 <style>
   body { font-family: Arial, sans-serif; max-width: 500px; margin: 20px auto; }
-  #calendar { display: flex; flex-wrap: wrap; max-width: 350px; }
-  .day { width: 40px; height: 40px; border: 1px solid #ddd; margin: 2px;
-         display: flex; justify-content: center; align-items: center; cursor: pointer; }
-  .day.disabled { color: #ccc; cursor: not-allowed; }
-  .day.selected { background-color: #007bff; color: white; }
-  #times { margin-top: 20px; }
-  .time-slot { padding: 5px 10px; margin: 5px; border: 1px solid #007bff; border-radius: 4px; cursor: pointer; display: inline-block; }
-  .time-slot.disabled { border-color: #ccc; color: #ccc; cursor: not-allowed; }
-  #message { margin-top: 20px; font-weight: bold; }
+  #doctor-name { font-weight: bold; margin-bottom: 10px; }
+
+  #calendar-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 350px;
+    margin-bottom: 5px;
+  }
+  #monthLabel { margin: 0 10px; }
+
+  #weekdays {
+    display: flex;
+    max-width: 350px;
+    font-weight: bold;
+  }
+  #weekdays > div {
+    width: 40px;
+    text-align: center;
+  }
+
+  #calendar {
+    display: flex;
+    flex-wrap: wrap;
+    max-width: 350px;
+  }
+  .day {
+    width: 40px; height: 40px;
+    border: 1px solid #ddd;
+    margin: 2px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+  }
+  .day.disabled {
+    color: #ccc;
+    cursor: not-allowed;
+  }
+  .day.selected {
+    background-color: #007bff;
+    color: white;
+  }
+
+  #times {
+    margin-top: 20px;
+  }
+  .time-slot {
+    padding: 5px 10px;
+    margin: 5px;
+    border: 1px solid #007bff;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-block;
+  }
+  .time-slot.disabled {
+    border-color: #ccc;
+    color: #ccc;
+    cursor: not-allowed;
+  }
+
+  #message {
+    margin-top: 20px;
+    font-weight: bold;
+  }
 </style>
 </head>
 <body>
 
-<h2>Выберите дату для записи:</h2>
+<div id="doctor-name">Загрузка...</div>
 
-<div style="display: flex; justify-content: space-between; align-items: center; max-width: 350px;">
+<div id="calendar-nav">
   <button id="prevMonth">← Предыдущий</button>
-  <h3 id="monthLabel">Июнь 2025</h3>
-  <button id="nextMonth">→ Следующий</button>
+  <h3 id="monthLabel"></h3>
+  <button id="nextMonth">Следующий →</button>
 </div>
 
-<div id="weekdays" style="display: flex; max-width: 350px; font-weight: bold;">
-  <div class="day" style="width: 40px;">Пн</div>
-  <div class="day" style="width: 40px;">Вт</div>
-  <div class="day" style="width: 40px;">Ср</div>
-  <div class="day" style="width: 40px;">Чт</div>
-  <div class="day" style="width: 40px;">Пт</div>
-  <div class="day" style="width: 40px;">Сб</div>
-  <div class="day" style="width: 40px;">Вс</div>
+<div id="weekdays">
+  <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div>
 </div>
 
 <div id="calendar"></div>
@@ -44,147 +290,194 @@
 <div id="message"></div>
 
 <script>
+  // Переменные для отображения месяца и года
+  let year, month;
 
-    let year = 2025;
-let month = 5; // Июнь
+  // Расписание — объект вида { "2025-06-15": ["09:00", "10:00"], ... }
+  let schedule = {};
 
-const monthNames = [
-  "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
-  "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
-];
+  let selectedDate = null;
 
-const calendarEl = document.getElementById('calendar');
-const timesEl = document.getElementById('times');
-const messageEl = document.getElementById('message');
+  const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+                      "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
 
-let schedule = {};
-let selectedDate = null;
+  const doctorNameDiv = document.getElementById('doctor-name');
+  const monthLabel = document.getElementById('monthLabel');
+  const calendarEl = document.getElementById('calendar');
+  const timesEl = document.getElementById('times');
+  const messageEl = document.getElementById('message');
 
-
-// Получаем количество дней в месяце
-function daysInMonth(y, m) {
+  // Функция получения количества дней в месяце
+  function daysInMonth(y, m) {
     return new Date(y, m + 1, 0).getDate();
-}
+  }
 
-// Загружаем расписание с сервера
-async function loadSchedule() {
-    const res = await fetch('/api/schedule');
-    schedule = await res.json();
-    renderCalendar();
-}
-
-// Рисуем календарь с активными/неактивными днями
-function renderCalendar() {
-    calendarEl.innerHTML = '';
-    const daysCount = daysInMonth(year, month);
-    const firstDay = new Date(year, month, 1);
-    const startWeekDay = (firstDay.getDay() + 6) % 7; // Пн = 0
-    document.getElementById('monthLabel').textContent = `${monthNames[month]} ${year}`;
-
-
-
-    // Пустые ячейки до 1-го числа
-    for (let i = 0; i < startWeekDay; i++) {
-        const emptyCell = document.createElement('div');
-        emptyCell.className = 'day';
-        emptyCell.style.visibility = 'hidden';
-        calendarEl.appendChild(emptyCell);
-    }
-
-    for (let d = 1; d <= daysCount; d++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const dayEl = document.createElement('div');
-        dayEl.className = 'day';
-        dayEl.textContent = d;
-
-        dayEl.dataset.date = dateStr;
-
-        if (schedule[dateStr] && schedule[dateStr].length > 0) {
-            dayEl.onclick = () => {
-                selectedDate = dateStr;
-                highlightSelectedDay();
-                renderTimes();
-                messageEl.textContent = '';
-            };
-        } else {
-            dayEl.classList.add('disabled');
-        }
-
-        calendarEl.appendChild(dayEl);
-    }
-}
-
-
-// Выделяем выбранный день
-function highlightSelectedDay() {
+  // Подсветить выбранный день
+  function highlightSelectedDay() {
     [...calendarEl.children].forEach(child => {
-        if (child.dataset.date === selectedDate) {
-            child.classList.add('selected');
-        } else {
-            child.classList.remove('selected');
-        }
+      if (child.dataset.date === selectedDate) {
+        child.classList.add('selected');
+      } else {
+        child.classList.remove('selected');
+      }
     });
-}
+  }
 
-
-// Показываем слоты для выбранной даты
-function renderTimes() {
+  // Отобразить доступные слоты времени для выбранной даты
+  function renderTimes() {
     timesEl.innerHTML = '';
+    messageEl.textContent = '';
+
     if (!selectedDate) return;
 
     const times = schedule[selectedDate] || [];
-    times.forEach(t => {
-        const slotEl = document.createElement('div');
-        slotEl.className = 'time-slot';
-        slotEl.textContent = t;
-        slotEl.onclick = () => bookSlot(t);
-        timesEl.appendChild(slotEl);
-    });
-
-    if(times.length === 0){
-        timesEl.textContent = 'Свободных слотов нет';
+    if (times.length === 0) {
+      timesEl.textContent = 'Свободных слотов нет';
+      return;
     }
-}
 
-// Отправляем запись на сервер
-async function bookSlot(time) {
-    const userName = prompt('Введите ваше имя для записи');
-    if (!userName) return;
+    times.forEach(time => {
+      const slotEl = document.createElement('div');
+      slotEl.className = 'time-slot';
+      slotEl.textContent = time;
 
-    const res = await fetch('/api/book', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({date: selectedDate, time: time, user_name: userName})
+      slotEl.onclick = async () => {
+        const userName = prompt('Введите ваше имя для записи');
+        if (!userName) return;
+
+        // Отправляем запрос на запись (придумай свой API)
+        try {
+          const res = await fetch('/api/book', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({date: selectedDate, time, user_name: userName})
+          });
+          const data = await res.json();
+
+          messageEl.textContent = data.message || (data.success ? 'Запись успешна' : 'Ошибка записи');
+
+          if (data.success) {
+            await loadSchedule(); // обновить расписание
+            renderCalendar();
+            highlightSelectedDay();
+            renderTimes();
+          }
+        } catch (e) {
+          messageEl.textContent = 'Ошибка сервера, попробуйте позже';
+          console.error(e);
+        }
+      };
+
+      timesEl.appendChild(slotEl);
     });
-    const data = await res.json();
-    messageEl.textContent = data.message;
-    if(data.success){
-        await loadSchedule();
-        renderTimes();
+  }
+
+  // Отрисовать календарь для текущего месяца и года
+  function renderCalendar() {
+    calendarEl.innerHTML = '';
+
+    const daysCount = daysInMonth(year, month);
+    const firstDay = new Date(year, month, 1);
+    const startWeekDay = (firstDay.getDay() + 6) % 7; // сдвиг, чтобы понедельник был 0
+
+    monthLabel.textContent = `${monthNames[month]} ${year}`;
+
+    // Пустые клетки перед первым днём месяца
+    for (let i = 0; i < startWeekDay; i++) {
+      const emptyCell = document.createElement('div');
+      emptyCell.className = 'day';
+      emptyCell.style.visibility = 'hidden';
+      calendarEl.appendChild(emptyCell);
     }
-}
 
-loadSchedule();
+    for (let d = 1; d <= daysCount; d++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const dayEl = document.createElement('div');
+      dayEl.className = 'day';
+      dayEl.textContent = d;
+      dayEl.dataset.date = dateStr;
 
-document.getElementById('prevMonth').onclick = () => {
+      // Если есть слоты на эту дату — делаем кликабельной
+      if (schedule[dateStr] && schedule[dateStr].length > 0) {
+        dayEl.onclick = () => {
+          selectedDate = dateStr;
+          highlightSelectedDay();
+          renderTimes();
+          messageEl.textContent = '';
+        };
+      } else {
+        dayEl.classList.add('disabled');
+      }
+
+      calendarEl.appendChild(dayEl);
+    }
+  }
+
+  // Загрузить расписание с backend
+  async function loadSchedule() {
+    messageEl.textContent = 'Загрузка расписания...';
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const doctorId = urlParams.get('doctor_id');
+    let doctorName = urlParams.get('doctor_name');
+    if (doctorName) doctorName = decodeURIComponent(doctorName);
+
+    if (!doctorId) {
+      alert('Не передан doctor_id в URL');
+      return;
+    }
+
+    doctorNameDiv.textContent = doctorName ? `Расписание врача: ${doctorName}` : 'Расписание врача';
+
+    // Инициализируем год и месяц текущей датой
+    const now = new Date();
+    year = now.getFullYear();
+    month = now.getMonth();
+
+    try {
+      const res = await fetch(`/api/schedule?doctor_id=${doctorId}`);
+      if (!res.ok) throw new Error(`Ошибка ${res.status}`);
+
+      schedule = await res.json();
+
+      selectedDate = null; // сброс выбора даты
+
+      renderCalendar();
+      renderTimes();
+
+      messageEl.textContent = '';
+    } catch (e) {
+      console.error(e);
+      messageEl.textContent = 'Ошибка загрузки расписания.';
+    }
+  }
+
+  document.getElementById('prevMonth').onclick = () => {
     month--;
     if (month < 0) {
-        month = 11;
-        year--;
+      month = 11;
+      year--;
     }
-    loadSchedule();
-};
+    renderCalendar();
+    renderTimes();
+    messageEl.textContent = '';
+  };
 
-document.getElementById('nextMonth').onclick = () => {
+  document.getElementById('nextMonth').onclick = () => {
     month++;
     if (month > 11) {
-        month = 0;
-        year++;
+      month = 0;
+      year++;
     }
-    loadSchedule();
-};
+    renderCalendar();
+    renderTimes();
+    messageEl.textContent = '';
+  };
+
+  window.onload = loadSchedule;
 
 </script>
 
 </body>
 </html>
+
