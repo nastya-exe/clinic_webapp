@@ -1,5 +1,13 @@
 window.onload = async function loadSchedule() {
-    const doctorId = 7;  // ВРЕМЕННАЯ ЗАТЫЧКА!
+    // Получаем doctor_id из параметров URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const doctorId = urlParams.get('doctor_id');
+
+    if (!doctorId) {
+        const datesContainer = document.getElementById('dates');
+        datesContainer.textContent = "Врач не выбран. Пожалуйста, выберите врача в боте и перейдите по ссылке.";
+        return;
+    }
 
     try {
         const response = await fetch(`/api/schedule?doctor_id=${doctorId}`);
@@ -10,7 +18,7 @@ window.onload = async function loadSchedule() {
         const datesContainer = document.getElementById('dates');
         const timesContainer = document.getElementById('times');
 
-        // Очистим контейнеры, если вдруг страница не перезагружается
+        // Очистим контейнеры
         datesContainer.innerHTML = '';
         timesContainer.innerHTML = '';
 
@@ -34,7 +42,7 @@ window.onload = async function loadSchedule() {
 
                     timeButton.onclick = () => {
                         alert(`Вы записались на ${date} в ${time}`);
-                        // TODO: сюда добавить POST-запрос на бронирование
+                        // TODO: добавить POST-запрос на бронирование
                     };
 
                     timesContainer.appendChild(timeButton);

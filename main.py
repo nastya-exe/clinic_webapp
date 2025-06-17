@@ -63,10 +63,18 @@ async def get_schedule(
 
     result = {}
 
-    # Загружаем расписание врача
+    # Загружаем расписание врача (рабочие часы по дням)
     stmt = select(DoctorSchedule).where(DoctorSchedule.doctor_id == doctor_id)
     schedules = (await session.execute(stmt)).scalars().all()
     schedule_map = {s.day_of_week.lower(): s for s in schedules}
+
+    # Загружаем уже занятые записи врача на эти даты
+    stmt_bookings = select(Appointment).where(
+        Appointment.doctor_id == doctor_id,
+        Appointment.date.in_(days)
+    )
+    bookings = (await session.execute(stmt_bookings)).scalars().all()
+    busy_slots = {(b.date, b.time.strftime('%H:%M')) for b in bookings}
 
     for day in days:
         dow_en = day.strftime('%A').lower()
@@ -77,16 +85,21 @@ async def get_schedule(
         start_time = sched.start_time
         end_time = sched.end_time
 
-        # генерируем слоты по часу
+        # Генерируем слоты по часу
         current_time = datetime.combine(day, start_time)
         slots = []
         while current_time.time() < end_time:
-            slots.append(current_time.strftime('%H:%M'))
+            time_str = current_time.strftime('%H:%M')
+            # Проверяем, свободен ли слот
+            if (day, time_str) not in busy_slots:
+                slots.append(time_str)
             current_time += timedelta(hours=1)
 
-        result[str(day)] = slots
+        if slots:
+            result[str(day)] = slots
 
     return result
+
 
 
 
