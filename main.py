@@ -53,16 +53,18 @@ async def get_session() -> AsyncSession:
 
 
 @app.get("/api/schedule")
-async def get_schedule(session: AsyncSession = Depends(get_session)):
+async def get_schedule(
+    doctor_id: int = Query(...),
+    session: AsyncSession = Depends(get_session)
+):
     today = datetime.today().date()
     days = [today + timedelta(days=i) for i in range(7)]
 
     result = {}
 
-    stmt = select(DoctorSchedule)
+    # фильтруем только нужного врача
+    stmt = select(DoctorSchedule).where(DoctorSchedule.doctor_id == doctor_id)
     schedules = (await session.execute(stmt)).scalars().all()
-
-
 
     for day in days:
         dow_en = day.strftime('%A').lower()
@@ -74,10 +76,11 @@ async def get_schedule(session: AsyncSession = Depends(get_session)):
                 slots = []
                 while current < end:
                     slots.append(current.strftime('%H:%M'))
-                    current += timedelta(minutes=60)  # шаг 1 час
+                    current += timedelta(minutes=60)
                 result.setdefault(str(day), []).extend(slots)
 
     return result
+
 
 
 @app.post("/api/book")
