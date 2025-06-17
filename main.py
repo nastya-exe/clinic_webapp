@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Depends
+from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,7 +11,7 @@ from sqlalchemy.future import select
 from sqlalchemy import func
 from datetime import datetime, timedelta, time
 from db.db_session import async_session
-from db.models import DoctorSchedule, Doctors
+from db.models import DoctorSchedule, Doctors, Appointments
 from fastapi import FastAPI, Depends, Query
 from dotenv import load_dotenv
 import os
@@ -69,9 +69,9 @@ async def get_schedule(
     schedule_map = {s.day_of_week.lower(): s for s in schedules}
 
     # Загружаем уже занятые записи врача на эти даты
-    stmt_bookings = select(Appointment).where(
-        Appointment.doctor_id == doctor_id,
-        Appointment.date.in_(days)
+    stmt_bookings = select(Appointments).where(
+        Appointments.doctor_id == doctor_id,
+        Appointments.date.in_(days)
     )
     bookings = (await session.execute(stmt_bookings)).scalars().all()
     busy_slots = {(b.date, b.time.strftime('%H:%M')) for b in bookings}
@@ -118,11 +118,11 @@ async def book_slot(data: BookingRequest):
 
 @app.get("/api/doctor_name")
 async def get_doctor_name(doctor_id: int, session: AsyncSession = Depends(get_session)):
-    stmt = select(Doctor).where(Doctor.id == doctor_id)
+    stmt = select(Doctors).where(Doctors.id == doctor_id)
     doctor = (await session.execute(stmt)).scalar_one_or_none()
     if not doctor:
         raise HTTPException(status_code=404, detail="Врач не найден")
-    return {"name": doctor.name}
+    return {"name": doctor.full_name}
 
 
 

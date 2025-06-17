@@ -414,43 +414,49 @@
   }
 
   // Загрузить расписание с backend
+
   async function loadSchedule() {
-    messageEl.textContent = 'Загрузка расписания...';
+  messageEl.textContent = 'Загрузка расписания...';
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const doctorId = urlParams.get('doctor_id');
-    let doctorName = urlParams.get('doctor_name');
-    if (doctorName) doctorName = decodeURIComponent(doctorName);
+  const urlParams = new URLSearchParams(window.location.search);
+  const doctorId = urlParams.get('doctor_id');
+  let doctorName = '';
 
-    if (!doctorId) {
-      alert('Не передан doctor_id в URL');
-      return;
+  try {
+    const nameRes = await fetch(`/api/doctor_name?doctor_id=${doctorId}`);
+    if (nameRes.ok) {
+      const data = await nameRes.json();
+      doctorName = data.full_name;
     }
-
-    doctorNameDiv.textContent = doctorName ? `Расписание врача: ${doctorName}` : 'Расписание врача';
-
-    // Инициализируем год и месяц текущей датой
-    const now = new Date();
-    year = now.getFullYear();
-    month = now.getMonth();
-
-    try {
-      const res = await fetch(`/api/schedule?doctor_id=${doctorId}`);
-      if (!res.ok) throw new Error(`Ошибка ${res.status}`);
-
-      schedule = await res.json();
-
-      selectedDate = null; // сброс выбора даты
-
-      renderCalendar();
-      renderTimes();
-
-      messageEl.textContent = '';
-    } catch (e) {
-      console.error(e);
-      messageEl.textContent = 'Ошибка загрузки расписания.';
-    }
+  } catch (err) {
+    console.warn("Не удалось получить имя врача:", err);
   }
+
+  doctorNameDiv.textContent = doctorName ? `Расписание врача: ${doctorName}` : 'Расписание врача';
+
+  // Инициализируем год и месяц текущей датой
+  const now = new Date();
+  year = now.getFullYear();
+  month = now.getMonth();
+
+  try {
+    const res = await fetch(`/api/schedule?doctor_id=${doctorId}`);
+    if (!res.ok) throw new Error(`Ошибка ${res.status}`);
+
+    schedule = await res.json();
+
+    selectedDate = null; // сброс выбора даты
+
+    renderCalendar();
+    renderTimes();
+
+    messageEl.textContent = '';
+  } catch (e) {
+    console.error(e);
+    messageEl.textContent = 'Ошибка загрузки расписания.';
+  }
+}
+
 
   document.getElementById('prevMonth').onclick = () => {
     month--;
