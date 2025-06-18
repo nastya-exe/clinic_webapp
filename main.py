@@ -71,10 +71,14 @@ async def get_schedule(
     # Загружаем уже занятые записи врача на эти даты
     stmt_bookings = select(Appointments).where(
         Appointments.doctor_id == doctor_id,
-        Appointments.date.in_(days)
+        func.date(Appointments.appointment_time).in_(days)
+
     )
     bookings = (await session.execute(stmt_bookings)).scalars().all()
-    busy_slots = {(b.date, b.time.strftime('%H:%M')) for b in bookings}
+    busy_slots = {
+        (b.appointment_time.date(), b.appointment_time.strftime('%H:%M'))
+        for b in bookings
+    }
 
     for day in days:
         dow_en = day.strftime('%A').lower()
