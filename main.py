@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
-from datetime import datetime, timedelta, time
+from datetime import datetime, time, timedelta
 from db.db_session import async_session
 from db.models import DoctorSchedule, Doctors, Appointments
 from fastapi import FastAPI, Depends, Query
@@ -59,7 +59,7 @@ async def get_schedule(
     session: AsyncSession = Depends(get_session)
 ):
     today = datetime.today().date()
-    days = [today + timedelta(days=i) for i in range(7)]
+    days = [today + timedelta(days=i) for i in range(60)]
 
     result = {}
 
@@ -71,12 +71,13 @@ async def get_schedule(
     # Загружаем уже занятые записи врача на эти даты
     stmt_bookings = select(Appointments).where(
         Appointments.doctor_id == doctor_id,
-        func.date(Appointments.appointment_time).in_(days)
+        Appointments.appointment_time >= datetime.combine(today, time.min),
+        Appointments.appointment_time < datetime.combine(today + timedelta(days=60), time.max)
 
     )
     bookings = (await session.execute(stmt_bookings)).scalars().all()
     busy_slots = {
-        (b.appointment_time.date(), b.appointment_time.strftime('%H:%M'))
+        b.appointment_time.strftime('%Y-%m-%d %H:%M')
         for b in bookings
     }
 
@@ -93,17 +94,16 @@ async def get_schedule(
         current_time = datetime.combine(day, start_time)
         slots = []
         while current_time.time() < end_time:
-            time_str = current_time.strftime('%H:%M')
+            slot_str = current_time.strftime('%Y-%m-%d %H:%M')
             # Проверяем, свободен ли слот
-            if (day, time_str) not in busy_slots:
-                slots.append(time_str)
+            if slot_str not in busy_slots:
+                slots.append(current_time.strftime('%H:%M'))
             current_time += timedelta(hours=1)
 
         if slots:
             result[str(day)] = slots
 
     return result
-
 
 
 
