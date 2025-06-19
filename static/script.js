@@ -6,6 +6,13 @@ window.onload = async function () {
         alert("Не передан doctor_id в URL");
         return;
     }
+    const patientId = urlParams.get("patient_id");
+
+        if (!patientId) {
+            alert("Не передан patient_id в URL");
+            return;
+        }
+
 
     // Получаем полное имя врача через API
     let doctorName = "";
@@ -54,8 +61,32 @@ window.onload = async function () {
                     timeButton.textContent = time;
                     timeButton.className = 'time-button';
 
-                    timeButton.onclick = () => {
-                        alert(`Вы записались к врачу ${doctorName || ''} на ${date} в ${time}`);
+                    timeButton.onclick = async () => {
+                        const appointmentDateTime = `${date} ${time}`;
+
+                        try {
+                            const response = await fetch("/api/book", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify({
+                                    doctor_id: parseInt(doctorId),
+                                    appointment_time: appointmentDateTime,
+                                    patient_id: parseInt(patientId)
+                                })
+                            });
+
+                            if (!response.ok) {
+                                const err = await response.json();
+                                alert("Ошибка записи: " + err.detail);
+                                return;
+                            }
+
+                            alert(`Вы записались к врачу ${doctorName || ''} на ${appointmentDateTime}`);
+                        } catch (error) {
+                            alert("Ошибка при попытке записи: " + error.message);
+                        }
                     };
 
                     timesContainer.appendChild(timeButton);
