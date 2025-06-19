@@ -62,7 +62,7 @@ window.onload = async function () {
                     timeButton.className = 'time-button';
 
                     timeButton.onclick = async () => {
-                        const appointmentDateTime = `${date} ${time}`;
+                        const appointmentDateTime = `${date}T${time}:00`;
 
                         try {
                             const response = await fetch("/api/book", {

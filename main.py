@@ -124,6 +124,7 @@ async def get_schedule(
 # Создание записи
 @app.post("/api/book")
 async def book_appointment(data: BookingData, session: AsyncSession = Depends(get_session)):
+    print(f"Получены данные для бронирования: {data}")
     # Формируем запрос, который ищет запись в таблице Appointments с таким же врачом и
     # временем приёма, которое пытаются забронировать.
     stmt = select(Appointments).where(
