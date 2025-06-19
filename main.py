@@ -108,16 +108,29 @@ async def get_schedule(
 
 
 @app.post("/api/book")
-async def book_slot(data: BookingRequest):
-    # Проверяем свободен ли слот
-    if BOOKINGS.get(data.date, {}).get(data.time):
-        return {"success": False, "message": "Это время уже занято"}
+async def book_appointment(data: BookingData, session: AsyncSession = Depends(get_session)):
+    # Проверяем, занят ли слот (через запрос к базе)
+    stmt = select(Appointments).where(
+        Appointments.doctor_id == data.doctor_id,
+        Appointments.appointment_time == data.appointment_time
+    )
+    existing = await session.execute(stmt)
+    if existing.scalars().first():
+        raise HTTPException(status_code=400, detail="Слот уже занят")
 
-    # Записываем
-    if data.date not in BOOKINGS:
-        BOOKINGS[data.date] = {}
-    BOOKINGS[data.date][data.time] = data.user_name
-    return {"success": True, "message": f"Вы записаны на {data.date} в {data.time}"}
+    # Создаём запись
+    new_appointment = Appointments(
+        doctor_id=data.doctor_id,
+        appointment_time=data.appointment_time,
+        patient_id=data.patient_id,  # или null, если нет
+        channel='telegram'
+    )
+    session.add(new_appointment)
+    await session.commit()
+
+    print(f"Запись создана: врач {data.doctor_id}, время {data.appointment_time}")
+
+    return {"status": "success"}
 
 
 @app.get("/api/doctor_name")
