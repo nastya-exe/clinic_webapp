@@ -1,6 +1,7 @@
 window.onload = async function () {
     const urlParams = new URLSearchParams(window.location.search);
     const doctorId = urlParams.get("doctor_id");
+    const patientId = urlParams.get("patient_id");
 
     if (!doctorId) {
         alert("Не передан doctor_id в URL");
@@ -13,6 +14,9 @@ window.onload = async function () {
             return;
         }
 
+    console.log("doctorId:", doctorId);
+    console.log("patientId (raw):", patientId);
+    console.log("patientId (int):", parseInt(patientId));
 
     // Получаем полное имя врача через API
     let doctorName = "";
@@ -63,6 +67,12 @@ window.onload = async function () {
 
                     timeButton.onclick = async () => {
                         const appointmentDateTime = `${date}T${time}:00`;
+
+                        console.log("Отправляем данные записи:", {
+                            doctor_id: parseInt(doctorId),
+                            appointment_time: appointmentDateTime,
+                            patient_id: parseInt(patientId)
+                        });
 
                         try {
                             const response = await fetch("/api/book", {
