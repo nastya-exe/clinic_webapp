@@ -1,7 +1,10 @@
 window.onload = async function () {
     const urlParams = new URLSearchParams(window.location.search);
     const doctorId = urlParams.get("doctor_id");
-    const patientId = urlParams.get("patient_id");
+    let rawPatientId = urlParams.get("patient_id") || "";
+    const patientId = parseInt(rawPatientId.split(":")[0]);
+
+    console.log("patientId очищенный:", patientId);
 
     if (!doctorId) {
         alert("Не передан doctor_id в URL");
@@ -13,10 +16,6 @@ window.onload = async function () {
             alert("Не передан patient_id в URL");
             return;
         }
-
-    console.log("doctorId:", doctorId);
-    console.log("patientId (raw):", patientId);
-    console.log("patientId (int):", parseInt(patientId));
 
     // Получаем полное имя врача через API
     let doctorName = "";
