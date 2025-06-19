@@ -10,12 +10,12 @@ window.onload = async function () {
         alert("Не передан doctor_id в URL");
         return;
     }
-    const patientId = urlParams.get("patient_id");
 
-        if (!patientId) {
-            alert("Не передан patient_id в URL");
-            return;
-        }
+
+    if (!patientId) {
+        alert("Не передан корректный patient_id в URL");
+        return;
+    }
 
     // Получаем полное имя врача через API
     let doctorName = "";
